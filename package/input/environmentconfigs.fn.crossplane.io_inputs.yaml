@@ -68,6 +68,18 @@ spec:
                 items:
                   description: EnvironmentSource selects a EnvironmentConfig resource.
                   properties:
+                    apiVersion:
+                      default: apiextensions.crossplane.io/v1beta1
+                      enum:
+                      - apiextensions.crossplane.io/v1beta1
+                      - v1
+                      type: string
+                    kind:
+                      default: EnvironmentConfig
+                      enum:
+                      - EnvironmentConfig
+                      - ConfigMap
+                      type: string
                     ref:
                       description: |-
                         Ref is a named reference to a single EnvironmentConfig.
