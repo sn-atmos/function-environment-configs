@@ -16,6 +16,7 @@ import (
 	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/utils/ptr"
 
 	fnv1 "github.com/crossplane/function-sdk-go/proto/v1"
 	"github.com/crossplane/function-sdk-go/request"
@@ -317,15 +318,21 @@ func lessAs[T cmp.Ordered](a, b any) (bool, error) {
 func buildRequirements(in *v1beta1.Input, xr *resource.Composite) (*fnv1.Requirements, error) {
 	resources := make(map[string]*fnv1.ResourceSelector, len(in.Spec.EnvironmentConfigs))
 	for i, config := range in.Spec.EnvironmentConfigs {
+		apiVersion := ptr.Deref(config.APIVersion, "apiextensions.crossplane.io/v1beta1")
+		kind := ptr.Deref(config.Kind, "EnvironmentConfig")
+
 		extraResName := fmt.Sprintf("environment-config-%d", i)
 		switch config.Type {
 		case v1beta1.EnvironmentSourceTypeReference, "":
 			resources[extraResName] = &fnv1.ResourceSelector{
-				ApiVersion: "apiextensions.crossplane.io/v1beta1",
-				Kind:       "EnvironmentConfig",
+				ApiVersion: apiVersion,
+				Kind:       kind,
 				Match: &fnv1.ResourceSelector_MatchName{
 					MatchName: config.Ref.Name,
 				},
+			}
+			if kind == "ConfigMap" && apiVersion == "v1" {
+				resources[extraResName].Namespace = ptr.To(xr.Resource.Unstructured.GetNamespace())
 			}
 		case v1beta1.EnvironmentSourceTypeSelector:
 			matchLabels := map[string]string{}
@@ -349,11 +356,14 @@ func buildRequirements(in *v1beta1.Input, xr *resource.Composite) (*fnv1.Require
 				continue
 			}
 			resources[extraResName] = &fnv1.ResourceSelector{
-				ApiVersion: "apiextensions.crossplane.io/v1beta1",
-				Kind:       "EnvironmentConfig",
+				ApiVersion: apiVersion,
+				Kind:       kind,
 				Match: &fnv1.ResourceSelector_MatchLabels{
 					MatchLabels: &fnv1.MatchLabels{Labels: matchLabels},
 				},
+			}
+			if kind == "ConfigMap" && apiVersion == "v1" {
+				resources[extraResName].Namespace = ptr.To(xr.Resource.Unstructured.GetNamespace())
 			}
 		}
 	}
