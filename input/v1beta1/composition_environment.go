@@ -104,6 +104,14 @@ type EnvironmentSource struct {
 	// +kubebuilder:default=Reference
 	Type EnvironmentSourceType `json:"type,omitempty"`
 
+	// +kubebuilder:default=apiextensions.crossplane.io/v1beta1
+	// +kubebuilder:validation:Enum=apiextensions.crossplane.io/v1beta1;v1
+	APIVersion *string `json:"apiVersion,omitempty"`
+
+	// +kubebuilder:validation:Enum=EnvironmentConfig;ConfigMap
+	// +kubebuilder:default=EnvironmentConfig
+	Kind *string `json:"kind,omitempty"`
+
 	// Ref is a named reference to a single EnvironmentConfig.
 	// Either Ref or Selector is required.
 	// +optional
