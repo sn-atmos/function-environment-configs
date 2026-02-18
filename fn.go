@@ -30,6 +30,10 @@ const (
 	FunctionContextKeyEnvironment = "apiextensions.crossplane.io/environment"
 )
 
+var (
+	ErrCannotGetValueFromFieldPath = errors.New("cannot get value from field path %q")
+)
+
 // Function returns whatever response you ask it to.
 type Function struct {
 	fnv1.UnimplementedFunctionRunnerServiceServer
@@ -64,6 +68,11 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 	// requested them already at the previous iteration.
 	requirements, err := buildRequirements(in, oxr)
 	if err != nil {
+		if errors.Is(err, ErrCannotGetValueFromFieldPath) {
+			f.log.Debug("cannot build requirements", "error", err)
+			return rsp, nil
+		}
+
 		response.Fatal(rsp, errors.Wrapf(err, "cannot build requirements"))
 		return rsp, nil
 	}
@@ -314,7 +323,7 @@ func buildRequirements(in *v1beta1.Input, xr *resource.Composite) (*fnv1.Require
 					value, err := fieldpath.Pave(xr.Resource.Object).GetString(*selector.ValueFromFieldPath)
 					if err != nil {
 						if !selector.FromFieldPathIsOptional() {
-							return nil, errors.Wrapf(err, "cannot get value from field path %q", *selector.ValueFromFieldPath)
+							return nil, errors.Wrapf(err, ErrCannotGetValueFromFieldPath.Error(), *selector.ValueFromFieldPath)
 						}
 						continue
 					}
