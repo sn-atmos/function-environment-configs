@@ -349,7 +349,7 @@ func buildRequirements(in *v1beta1.Input, xr *resource.Composite, env map[string
 					MatchName: config.Ref.Name,
 				},
 			}
-			if kind == "ConfigMap" && apiVersion == "v1" {
+			if (kind == "ConfigMap" && apiVersion == "v1") || (kind == "EnvironmentConfig" && apiVersion == "environmentconfigs.crossplane.io/v1alpha1") {
 				resources[extraResName].Namespace = ptr.To(xr.Resource.Unstructured.GetNamespace())
 			}
 		case v1beta1.EnvironmentSourceTypeSelector:
@@ -368,7 +368,7 @@ func buildRequirements(in *v1beta1.Input, xr *resource.Composite, env map[string
 					MatchLabels: &fnv1.MatchLabels{Labels: matchLabels},
 				},
 			}
-			if kind == "ConfigMap" && apiVersion == "v1" {
+			if (kind == "ConfigMap" && apiVersion == "v1") || (kind == "EnvironmentConfig" && apiVersion == "environmentconfigs.crossplane.io/v1alpha1") {
 				resources[extraResName].Namespace = ptr.To(xr.Resource.Unstructured.GetNamespace())
 			}
 		}

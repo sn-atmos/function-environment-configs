@@ -104,7 +104,7 @@ type EnvironmentSource struct {
 	Type EnvironmentSourceType `json:"type,omitempty"`
 
 	// +kubebuilder:default=apiextensions.crossplane.io/v1beta1
-	// +kubebuilder:validation:Enum=apiextensions.crossplane.io/v1beta1;v1
+	// +kubebuilder:validation:Enum=apiextensions.crossplane.io/v1beta1;environmentconfigs.crossplane.io/v1alpha1;v1
 	APIVersion *string `json:"apiVersion,omitempty"`
 
 	// +kubebuilder:validation:Enum=EnvironmentConfig;ConfigMap
