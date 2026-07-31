@@ -360,7 +360,7 @@ func buildRequirements(in *v1beta1.Input, xr *resource.Composite, env map[string
 				},
 			}
 			if (kind == "ConfigMap" && apiVersion == "v1") || (kind == "EnvironmentConfig" && apiVersion == "environmentconfigs.crossplane.io/v1alpha1") {
-				resources[extraResName].Namespace = ptr.To(xr.Resource.Unstructured.GetNamespace())
+				resources[extraResName].Namespace = new(xr.Resource.GetNamespace())
 			}
 		case v1beta1.EnvironmentSourceTypeSelector:
 			matchLabels, err := buildMatchLabels(config.Selector.MatchLabels, xr, env)
@@ -379,7 +379,7 @@ func buildRequirements(in *v1beta1.Input, xr *resource.Composite, env map[string
 				},
 			}
 			if (kind == "ConfigMap" && apiVersion == "v1") || (kind == "EnvironmentConfig" && apiVersion == "environmentconfigs.crossplane.io/v1alpha1") {
-				resources[extraResName].Namespace = ptr.To(xr.Resource.Unstructured.GetNamespace())
+				resources[extraResName].Namespace = new(xr.Resource.GetNamespace())
 			}
 		}
 	}
