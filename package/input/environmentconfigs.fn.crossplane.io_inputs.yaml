@@ -72,6 +72,7 @@ spec:
                       default: apiextensions.crossplane.io/v1beta1
                       enum:
                       - apiextensions.crossplane.io/v1beta1
+                      - environmentconfigs.crossplane.io/v1alpha1
                       - v1
                       type: string
                     kind:
