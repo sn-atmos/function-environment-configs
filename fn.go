@@ -381,10 +381,10 @@ func buildMatchLabels(matchers []v1beta1.EnvironmentSourceSelectorLabelMatcher, 
 
 	for _, selector := range matchers {
 		switch selector.GetType() {
-		case v1beta1.EnvironmentSourceSelectorLabelMatcherTypeValue:
+		case v1beta1.ValueSelectorTypeValue:
 			// TODO validate value not to be nil
 			matchLabels[selector.Key] = *selector.Value
-		case v1beta1.EnvironmentSourceSelectorLabelMatcherTypeFromCompositeFieldPath:
+		case v1beta1.ValueSelectorTypeFromCompositeFieldPath:
 			value, err := fieldpath.Pave(xr.Resource.Object).GetString(*selector.ValueFromFieldPath)
 			if err != nil {
 				if !selector.FromFieldPathIsOptional() {
@@ -393,7 +393,7 @@ func buildMatchLabels(matchers []v1beta1.EnvironmentSourceSelectorLabelMatcher, 
 				continue
 			}
 			matchLabels[selector.Key] = value
-		case v1beta1.EnvironmentSourceSelectorLabelMatcherTypeFromEnvironmentFieldPath:
+		case v1beta1.ValueSelectorTypeFromEnvironmentFieldPath:
 			value, err := fieldpath.Pave(env).GetString(*selector.ValueFromFieldPath)
 			if err != nil {
 				if !selector.FromFieldPathIsOptional() {

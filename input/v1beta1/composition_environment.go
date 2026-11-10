@@ -189,21 +189,19 @@ func (e *EnvironmentSourceSelector) GetSortByFieldPath() string {
 	return e.SortByFieldPath
 }
 
-// EnvironmentSourceSelectorLabelMatcherType specifies where the value for a
-// label comes from.
-type EnvironmentSourceSelectorLabelMatcherType string
+// ValueSelectorType specifies where a value comes from.
+type ValueSelectorType string
 
 const (
-	// EnvironmentSourceSelectorLabelMatcherTypeFromCompositeFieldPath extracts
-	// the label value from a composite fieldpath.
-	EnvironmentSourceSelectorLabelMatcherTypeFromCompositeFieldPath EnvironmentSourceSelectorLabelMatcherType = "FromCompositeFieldPath"
-	// EnvironmentSourceSelectorLabelMatcherTypeFromEnvironmentFieldPath extracts
-	// the label value from environment fieldpath.
-	EnvironmentSourceSelectorLabelMatcherTypeFromEnvironmentFieldPath EnvironmentSourceSelectorLabelMatcherType = "FromEnvironmentFieldPath"
+	// ValueSelectorTypeFromCompositeFieldPath extracts
+	// the value from a composite fieldpath.
+	ValueSelectorTypeFromCompositeFieldPath ValueSelectorType = "FromCompositeFieldPath"
+	// ValueSelectorTypeFromEnvironmentFieldPath extracts
+	// the value from an environment fieldpath.
+	ValueSelectorTypeFromEnvironmentFieldPath ValueSelectorType = "FromEnvironmentFieldPath"
 
-	// EnvironmentSourceSelectorLabelMatcherTypeValue uses a literal as label
-	// value.
-	EnvironmentSourceSelectorLabelMatcherTypeValue EnvironmentSourceSelectorLabelMatcherType = "Value"
+	// ValueSelectorTypeValue uses a literal value.
+	ValueSelectorTypeValue ValueSelectorType = "Value"
 )
 
 // An EnvironmentSourceSelectorLabelMatcher acts like a k8s label selector but
@@ -213,7 +211,7 @@ type EnvironmentSourceSelectorLabelMatcher struct {
 	// +optional
 	// +kubebuilder:validation:Enum=FromCompositeFieldPath;FromEnvironmentFieldPath;Value
 	// +kubebuilder:default=FromCompositeFieldPath
-	Type EnvironmentSourceSelectorLabelMatcherType `json:"type,omitempty"`
+	Type ValueSelectorType `json:"type,omitempty"`
 
 	// Key of the label to match.
 	Key string `json:"key"`
@@ -243,9 +241,9 @@ func (e *EnvironmentSourceSelectorLabelMatcher) FromFieldPathIsOptional() bool {
 }
 
 // GetType returns the type of the label matcher, returning the default if not set.
-func (e *EnvironmentSourceSelectorLabelMatcher) GetType() EnvironmentSourceSelectorLabelMatcherType {
+func (e *EnvironmentSourceSelectorLabelMatcher) GetType() ValueSelectorType {
 	if e == nil || e.Type == "" {
-		return EnvironmentSourceSelectorLabelMatcherTypeFromCompositeFieldPath
+		return ValueSelectorTypeFromCompositeFieldPath
 	}
 	return e.Type
 }
