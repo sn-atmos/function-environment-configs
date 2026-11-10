@@ -125,13 +125,27 @@ type EnvironmentSource struct {
 	ToFieldPath *string `json:"toFieldPath,omitempty"`
 
 	// Namespace specifies the namespace to look up the EnvironmentConfig resource in.
+	// Ignored if cluster-scoped EnvironmentConfig.
+	// +optional
 	Namespace *ValueSelector `json:"namespace,omitempty"`
 }
 
 // ValueSelector gets a value based on a ValueSelectorType.
 type ValueSelector struct {
-	Type  ValueSelectorType `json:"type,omitempty"`
-	Value *string           `json:"value,omitempty"`
+	// +kubebuilder:validation:Enum=Value;FromCompositeFieldPath;FromEnvironmentFieldPath
+	// +optional
+	Type ValueSelectorType `json:"type,omitempty"`
+	// +optional
+	Value *string `json:"value,omitempty"`
+}
+
+// GetType returns the type of the value selector, returning the default if not set.
+func (v *ValueSelector) GetType() ValueSelectorType {
+	if v == nil || v.Type == "" {
+		return ValueSelectorTypeValue
+	}
+
+	return v.Type
 }
 
 // GetType returns the type of the environment source, returning the default if not set.
