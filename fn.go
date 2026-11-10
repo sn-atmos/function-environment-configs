@@ -334,14 +334,13 @@ func lessAs[T cmp.Ordered](a, b any) (bool, error) {
 }
 
 // getNamespace returns the configured namespace of the EnvironmentSource.
-// If namespace is not set (nil), it returns nil.
-// If namespace value is set to empty string, it defaults to XR namespace.
+// If namespace value is not set (nil or empty string), it defaults to XR namespace.
 // If the selector type is "Value", it returns the value.
 // If the selector type is "FromEnvironmentFieldPath", it returns the resolved value from the environment field path.
 // If the selector type is "FromCompositeFieldPath", it returns the resolved value from the composite field path.
 func getNamespace(config v1beta1.EnvironmentSource, xr *resource.Composite, env map[string]any) (*string, error) {
 	if config.Namespace == nil || config.Namespace.Value == nil {
-		return nil, nil
+		return new(xr.Resource.GetNamespace()), nil
 	}
 
 	value := ptr.Deref(config.Namespace.Value, "")
