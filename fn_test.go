@@ -12,7 +12,6 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/structpb"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/utils/ptr"
 
 	fnv1 "github.com/crossplane/function-sdk-go/proto/v1"
 	"github.com/crossplane/function-sdk-go/resource"
@@ -570,7 +569,7 @@ func TestRunFunction(t *testing.T) {
 					Results: []*fnv1.Result{
 						{
 							Severity: fnv1.Severity_SEVERITY_FATAL,
-							Target:   ptr.To(fnv1.Target_TARGET_COMPOSITE),
+							Target:   new(fnv1.Target_TARGET_COMPOSITE),
 						},
 					},
 					Requirements: &fnv1.Requirements{
@@ -1266,7 +1265,7 @@ func TestRunFunction(t *testing.T) {
 								ApiVersion: "v1",
 								Kind:       "ConfigMap",
 								Match:      &fnv1.ResourceSelector_MatchName{MatchName: "literal-namespace"},
-								Namespace:  ptr.To("literal-namespace"),
+								Namespace:  new("literal-namespace"),
 							},
 							"environment-config-1": {
 								ApiVersion: "v1",
@@ -1274,13 +1273,13 @@ func TestRunFunction(t *testing.T) {
 								Match: &fnv1.ResourceSelector_MatchLabels{
 									MatchLabels: &fnv1.MatchLabels{Labels: map[string]string{"app": "demo"}},
 								},
-								Namespace: ptr.To("composite-namespace"),
+								Namespace: new("composite-namespace"),
 							},
 							"environment-config-2": {
 								ApiVersion: "environmentconfigs.crossplane.io/v1alpha1",
 								Kind:       "EnvironmentConfig",
 								Match:      &fnv1.ResourceSelector_MatchName{MatchName: "environment-namespace"},
-								Namespace:  ptr.To("environment-namespace"),
+								Namespace:  new("environment-namespace"),
 							},
 							"environment-config-3": {
 								ApiVersion: "apiextensions.crossplane.io/v1beta1",
@@ -1291,7 +1290,7 @@ func TestRunFunction(t *testing.T) {
 								ApiVersion: "v1",
 								Kind:       "ConfigMap",
 								Match:      &fnv1.ResourceSelector_MatchName{MatchName: "empty-namespace"},
-								Namespace:  ptr.To("xr-namespace"),
+								Namespace:  new("xr-namespace"),
 							},
 						},
 					},
