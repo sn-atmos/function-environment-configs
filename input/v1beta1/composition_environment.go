@@ -123,6 +123,15 @@ type EnvironmentSource struct {
 	// ToFieldPath specifies where in the environment to load the EnvironmentConfig(s).
 	// +optional
 	ToFieldPath *string `json:"toFieldPath,omitempty"`
+
+	// Namespace specifies the namespace to look up the EnvironmentConfig resource in.
+	Namespace *ValueSelector `json:"namespace,omitempty"`
+}
+
+// ValueSelector gets a value based on a ValueSelectorType.
+type ValueSelector struct {
+	Type  ValueSelectorType `json:"type,omitempty"`
+	Value *string           `json:"value,omitempty"`
 }
 
 // GetType returns the type of the environment source, returning the default if not set.
