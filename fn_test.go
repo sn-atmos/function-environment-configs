@@ -1181,6 +1181,132 @@ func TestRunFunction(t *testing.T) {
 				},
 			},
 		},
+		"NamespaceValueSelectors": {
+			reason: "The Function should resolve namespace value selectors and only set namespaces for namespaced resources",
+			args: args{
+				req: &fnv1.RunFunctionRequest{
+					Meta: &fnv1.RequestMeta{Tag: "hello"},
+					Observed: &fnv1.State{
+						Composite: &fnv1.Resource{
+							Resource: resource.MustStructJSON(`{
+								"apiVersion": "test.crossplane.io/v1alpha1",
+								"kind": "XR",
+								"metadata": {
+									"name": "my-xr",
+									"namespace": "xr-namespace"
+								},
+								"spec": {
+									"targetNamespace": "composite-namespace"
+								}
+							}`),
+						},
+					},
+					Context: &structpb.Struct{
+						Fields: map[string]*structpb.Value{
+							FunctionContextKeyEnvironment: structpb.NewStructValue(resource.MustStructJSON(`{
+								"apiVersion": "internal.crossplane.io/v1alpha1",
+								"kind": "Environment",
+								"targetNamespace": "environment-namespace"
+							}`)),
+						},
+					},
+					Input: resource.MustStructJSON(`{
+						"apiVersion": "template.fn.crossplane.io/v1beta1",
+						"kind": "Input",
+						"spec": {
+							"environmentConfigs": [
+								{
+									"type": "Reference",
+									"apiVersion": "v1",
+									"kind": "ConfigMap",
+									"ref": {"name": "literal-namespace"},
+									"namespace": {"type": "Value", "value": "literal-namespace"}
+								},
+								{
+									"type": "Selector",
+									"apiVersion": "v1",
+									"kind": "ConfigMap",
+									"selector": {
+										"mode": "Single",
+										"matchLabels": [{"type": "Value", "key": "app", "value": "demo"}]
+									},
+									"namespace": {"type": "FromCompositeFieldPath", "value": "spec.targetNamespace"}
+								},
+								{
+									"type": "Reference",
+									"apiVersion": "environmentconfigs.crossplane.io/v1alpha1",
+									"kind": "EnvironmentConfig",
+									"ref": {"name": "environment-namespace"},
+									"namespace": {"type": "FromEnvironmentFieldPath", "value": "targetNamespace"}
+								},
+								{
+									"type": "Reference",
+									"ref": {"name": "cluster-scoped"},
+									"namespace": {"type": "Value", "value": "ignored-namespace"}
+								},
+								{
+									"type": "Reference",
+									"apiVersion": "v1",
+									"kind": "ConfigMap",
+									"ref": {"name": "empty-namespace"},
+									"namespace": {"type": "Value", "value": ""}
+								}
+							]
+						}
+					}`),
+				},
+			},
+			want: want{
+				rsp: &fnv1.RunFunctionResponse{
+					Meta:    &fnv1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Results: []*fnv1.Result{},
+					Requirements: &fnv1.Requirements{
+						Resources: map[string]*fnv1.ResourceSelector{
+							"environment-config-0": {
+								ApiVersion: "v1",
+								Kind:       "ConfigMap",
+								Match:      &fnv1.ResourceSelector_MatchName{MatchName: "literal-namespace"},
+								Namespace:  ptr.To("literal-namespace"),
+							},
+							"environment-config-1": {
+								ApiVersion: "v1",
+								Kind:       "ConfigMap",
+								Match: &fnv1.ResourceSelector_MatchLabels{
+									MatchLabels: &fnv1.MatchLabels{Labels: map[string]string{"app": "demo"}},
+								},
+								Namespace: ptr.To("composite-namespace"),
+							},
+							"environment-config-2": {
+								ApiVersion: "environmentconfigs.crossplane.io/v1alpha1",
+								Kind:       "EnvironmentConfig",
+								Match:      &fnv1.ResourceSelector_MatchName{MatchName: "environment-namespace"},
+								Namespace:  ptr.To("environment-namespace"),
+							},
+							"environment-config-3": {
+								ApiVersion: "apiextensions.crossplane.io/v1beta1",
+								Kind:       "EnvironmentConfig",
+								Match:      &fnv1.ResourceSelector_MatchName{MatchName: "cluster-scoped"},
+							},
+							"environment-config-4": {
+								ApiVersion: "v1",
+								Kind:       "ConfigMap",
+								Match:      &fnv1.ResourceSelector_MatchName{MatchName: "empty-namespace"},
+								Namespace:  ptr.To("xr-namespace"),
+							},
+						},
+					},
+					Context: &structpb.Struct{
+						Fields: map[string]*structpb.Value{
+							FunctionContextKeyEnvironment: structpb.NewStructValue(resource.MustStructJSON(`{
+								"apiVersion": "internal.crossplane.io/v1alpha1",
+								"kind": "Environment",
+								"targetNamespace": "environment-namespace"
+							}`)),
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for name, tc := range cases {

@@ -340,7 +340,7 @@ func lessAs[T cmp.Ordered](a, b any) (bool, error) {
 // If the selector type is "FromEnvironmentFieldPath", it returns the resolved value from the environment field path.
 // If the selector type is "FromCompositeFieldPath", it returns the resolved value from the composite field path.
 func getNamespace(config v1beta1.EnvironmentSource, xr *resource.Composite, env map[string]any) (*string, error) {
-	if config.Namespace.Value == nil {
+	if config.Namespace == nil || config.Namespace.Value == nil {
 		return nil, nil
 	}
 
