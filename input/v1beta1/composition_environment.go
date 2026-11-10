@@ -125,6 +125,7 @@ type EnvironmentSource struct {
 	ToFieldPath *string `json:"toFieldPath,omitempty"`
 
 	// Namespace specifies the namespace to look up the EnvironmentConfig resource in.
+	// Defaults to XR namespace.
 	// Ignored if cluster-scoped EnvironmentConfig.
 	// +optional
 	Namespace *ValueSelector `json:"namespace,omitempty"`
