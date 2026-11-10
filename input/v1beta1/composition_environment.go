@@ -189,9 +189,11 @@ func (e *EnvironmentSourceSelector) GetSortByFieldPath() string {
 	return e.SortByFieldPath
 }
 
-// EnvironmentSourceSelectorLabelMatcherType specifies where the value for a
-// label comes from.
+// EnvironmentSourceSelectorLabelMatcherType specifies where a value comes from.
 type EnvironmentSourceSelectorLabelMatcherType string
+
+// ValueSelectorType specifies where a value comes from.
+type ValueSelectorType string
 
 const (
 	// EnvironmentSourceSelectorLabelMatcherTypeFromCompositeFieldPath extracts
@@ -204,6 +206,16 @@ const (
 	// EnvironmentSourceSelectorLabelMatcherTypeValue uses a literal as label
 	// value.
 	EnvironmentSourceSelectorLabelMatcherTypeValue EnvironmentSourceSelectorLabelMatcherType = "Value"
+
+	// ValueSelectorTypeFromCompositeFieldPath extracts
+	// the value from a composite fieldpath.
+	ValueSelectorTypeFromCompositeFieldPath ValueSelectorType = "FromCompositeFieldPath"
+	// ValueSelectorTypeFromEnvironmentFieldPath extracts
+	// the value from an environment fieldpath.
+	ValueSelectorTypeFromEnvironmentFieldPath ValueSelectorType = "FromEnvironmentFieldPath"
+
+	// ValueSelectorTypeValue uses a literal value.
+	ValueSelectorTypeValue ValueSelectorType = "Value"
 )
 
 // An EnvironmentSourceSelectorLabelMatcher acts like a k8s label selector but
@@ -248,6 +260,24 @@ func (e *EnvironmentSourceSelectorLabelMatcher) GetType() EnvironmentSourceSelec
 		return EnvironmentSourceSelectorLabelMatcherTypeFromCompositeFieldPath
 	}
 	return e.Type
+}
+
+type ValueSelector struct {
+	// Type specifies where the value comes from.
+	// +optional
+	// +kubebuilder:validation:Enum=FromCompositeFieldPath;FromEnvironmentFieldPath;Value
+	// +kubebuilder:default=Value
+	Type ValueSelectorType `json:"type,omitempty"`
+
+	// Value specifies a literal label value.
+	Value *string `json:"value,omitempty"`
+}
+
+func (v *ValueSelector) GetType() ValueSelectorType {
+	if v == nil || v.Type == "" {
+		return ValueSelectorTypeFromCompositeFieldPath
+	}
+	return v.Type
 }
 
 // A FromFieldPathPolicy determines how to patch from a field path.
