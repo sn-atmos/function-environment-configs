@@ -135,7 +135,9 @@ type EnvironmentSource struct {
 type ValueSelector struct {
 	// +kubebuilder:validation:Enum=Value;FromCompositeFieldPath;FromEnvironmentFieldPath
 	// +optional
+	// +kubebuilder:default=Value
 	Type ValueSelectorType `json:"type,omitempty"`
+	// Value will be resolved based on the type.
 	// +optional
 	Value *string `json:"value,omitempty"`
 }
