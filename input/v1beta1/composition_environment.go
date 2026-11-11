@@ -219,9 +219,6 @@ func (e *EnvironmentSourceSelector) GetSortByFieldPath() string {
 // EnvironmentSourceSelectorLabelMatcherType specifies where a value comes from.
 type EnvironmentSourceSelectorLabelMatcherType string
 
-// ValueSelectorType specifies where a value comes from.
-type ValueSelectorType string
-
 const (
 	// EnvironmentSourceSelectorLabelMatcherTypeFromCompositeFieldPath extracts
 	// the label value from a composite fieldpath.
@@ -233,7 +230,12 @@ const (
 	// EnvironmentSourceSelectorLabelMatcherTypeValue uses a literal as label
 	// value.
 	EnvironmentSourceSelectorLabelMatcherTypeValue EnvironmentSourceSelectorLabelMatcherType = "Value"
+)
 
+// ValueSelectorType specifies where a value comes from.
+type ValueSelectorType string
+
+const (
 	// ValueSelectorTypeFromCompositeFieldPath extracts
 	// the value from a composite fieldpath.
 	ValueSelectorTypeFromCompositeFieldPath ValueSelectorType = "FromCompositeFieldPath"
