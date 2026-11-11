@@ -138,6 +138,7 @@ type ValueSelector struct {
 	// +kubebuilder:default=Value
 	Type ValueSelectorType `json:"type,omitempty"`
 	// Value will be resolved based on the type.
+	// Defaults to XR namespace.
 	// +optional
 	Value *string `json:"value,omitempty"`
 }

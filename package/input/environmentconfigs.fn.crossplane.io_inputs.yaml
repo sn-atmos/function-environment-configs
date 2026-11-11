@@ -97,7 +97,9 @@ spec:
                           - FromEnvironmentFieldPath
                           type: string
                         value:
-                          description: Value will be resolved based on the type.
+                          description: |-
+                            Value will be resolved based on the type.
+                            Defaults to XR namespace.
                           type: string
                       type: object
                     ref:
