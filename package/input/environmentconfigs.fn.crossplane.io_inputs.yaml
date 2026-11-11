@@ -81,6 +81,27 @@ spec:
                       - EnvironmentConfig
                       - ConfigMap
                       type: string
+                    namespace:
+                      description: |-
+                        Namespace specifies the namespace to look up the EnvironmentConfig resource in.
+                        Defaults to XR namespace.
+                        Ignored if cluster-scoped EnvironmentConfig.
+                      properties:
+                        type:
+                          default: Value
+                          description: ValueSelectorType specifies where a value comes
+                            from.
+                          enum:
+                          - Value
+                          - FromCompositeFieldPath
+                          - FromEnvironmentFieldPath
+                          type: string
+                        value:
+                          description: |-
+                            Value will be resolved based on the type.
+                            Defaults to XR namespace.
+                          type: string
+                      type: object
                     ref:
                       description: |-
                         Ref is a named reference to a single EnvironmentConfig.

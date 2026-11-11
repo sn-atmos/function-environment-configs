@@ -343,6 +343,47 @@ func lessAs[T cmp.Ordered](a, b any) (bool, error) {
 	return cmp.Less(av, bv), nil
 }
 
+// getNamespace returns the configured namespace of the EnvironmentSource.
+// If namespace value is not set (nil or empty string), it defaults to XR namespace, but returns an error if the XR is cluster-scoped.
+// If the selector type is "Value", it returns the value.
+// If the selector type is "FromEnvironmentFieldPath", it returns the resolved value from the environment field path.
+// If the selector type is "FromCompositeFieldPath", it returns the resolved value from the composite field path.
+func getNamespace(config v1beta1.EnvironmentSource, xr *resource.Composite, env map[string]any) (*string, error) {
+	if config.Namespace == nil || config.Namespace.Value == nil {
+		if xr.Resource.GetNamespace() == "" {
+			return nil, errors.New("namespace.value must be set for cluster-scoped XR's")
+		}
+		return new(xr.Resource.GetNamespace()), nil
+	}
+
+	value := ptr.Deref(config.Namespace.Value, "")
+	if value == "" {
+		return new(xr.Resource.GetNamespace()), nil
+	}
+
+	switch config.Namespace.GetType() {
+	case v1beta1.ValueSelectorTypeValue:
+		return &value, nil
+	case v1beta1.ValueSelectorTypeFromEnvironmentFieldPath:
+		result, err := fieldpath.Pave(env).GetString(value)
+		if err != nil {
+			return nil, errors.Wrapf(err, "could not get field path %q from environment", value)
+		}
+
+		return new(result), nil
+	case v1beta1.ValueSelectorTypeFromCompositeFieldPath:
+		result, err := fieldpath.Pave(xr.Resource.Object).GetString(value)
+		if err != nil {
+			return nil, errors.Wrapf(err, "could not get field path %q from composite", value)
+		}
+
+		return new(result), nil
+	default:
+		// should not happen
+		return nil, errors.New("could not get namespace cause value selector type was not set")
+	}
+}
+
 func buildRequirements(in *v1beta1.Input, xr *resource.Composite, env map[string]any) (*fnv1.Requirements, error) {
 	resources := make(map[string]*fnv1.ResourceSelector, len(in.Spec.EnvironmentConfigs))
 	for i, config := range in.Spec.EnvironmentConfigs {
@@ -350,6 +391,7 @@ func buildRequirements(in *v1beta1.Input, xr *resource.Composite, env map[string
 		kind := ptr.Deref(config.Kind, "EnvironmentConfig")
 
 		extraResName := fmt.Sprintf("environment-config-%d", i)
+
 		switch config.Type {
 		case v1beta1.EnvironmentSourceTypeReference, "":
 			resources[extraResName] = &fnv1.ResourceSelector{
@@ -360,8 +402,13 @@ func buildRequirements(in *v1beta1.Input, xr *resource.Composite, env map[string
 				},
 			}
 			if (kind == "ConfigMap" && apiVersion == "v1") || (kind == "EnvironmentConfig" && apiVersion == "environmentconfigs.crossplane.io/v1alpha1") {
-				resources[extraResName].Namespace = new(xr.Resource.GetNamespace())
+				namespace, err := getNamespace(config, xr, env)
+				if err != nil {
+					return nil, err
+				}
+				resources[extraResName].Namespace = namespace
 			}
+
 		case v1beta1.EnvironmentSourceTypeSelector:
 			matchLabels, err := buildMatchLabels(config.Selector.MatchLabels, xr, env)
 			if err != nil {
@@ -378,8 +425,13 @@ func buildRequirements(in *v1beta1.Input, xr *resource.Composite, env map[string
 					MatchLabels: &fnv1.MatchLabels{Labels: matchLabels},
 				},
 			}
+
 			if (kind == "ConfigMap" && apiVersion == "v1") || (kind == "EnvironmentConfig" && apiVersion == "environmentconfigs.crossplane.io/v1alpha1") {
-				resources[extraResName].Namespace = new(xr.Resource.GetNamespace())
+				namespace, err := getNamespace(config, xr, env)
+				if err != nil {
+					return nil, err
+				}
+				resources[extraResName].Namespace = namespace
 			}
 		}
 	}

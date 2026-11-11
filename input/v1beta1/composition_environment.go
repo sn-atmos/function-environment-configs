@@ -123,6 +123,33 @@ type EnvironmentSource struct {
 	// ToFieldPath specifies where in the environment to load the EnvironmentConfig(s).
 	// +optional
 	ToFieldPath *string `json:"toFieldPath,omitempty"`
+
+	// Namespace specifies the namespace to look up the EnvironmentConfig resource in.
+	// Defaults to XR namespace.
+	// Ignored if cluster-scoped EnvironmentConfig.
+	// +optional
+	Namespace *ValueSelector `json:"namespace,omitempty"`
+}
+
+// ValueSelector gets a value based on a ValueSelectorType.
+type ValueSelector struct {
+	// +kubebuilder:validation:Enum=Value;FromCompositeFieldPath;FromEnvironmentFieldPath
+	// +optional
+	// +kubebuilder:default=Value
+	Type ValueSelectorType `json:"type,omitempty"`
+	// Value will be resolved based on the type.
+	// Defaults to XR namespace.
+	// +optional
+	Value *string `json:"value,omitempty"`
+}
+
+// GetType returns the type of the value selector, returning the default if not set.
+func (v *ValueSelector) GetType() ValueSelectorType {
+	if v == nil || v.Type == "" {
+		return ValueSelectorTypeValue
+	}
+
+	return v.Type
 }
 
 // GetType returns the type of the environment source, returning the default if not set.
@@ -204,6 +231,21 @@ const (
 	// EnvironmentSourceSelectorLabelMatcherTypeValue uses a literal as label
 	// value.
 	EnvironmentSourceSelectorLabelMatcherTypeValue EnvironmentSourceSelectorLabelMatcherType = "Value"
+)
+
+// ValueSelectorType specifies where a value comes from.
+type ValueSelectorType string
+
+const (
+	// ValueSelectorTypeFromCompositeFieldPath extracts
+	// the value from a composite fieldpath.
+	ValueSelectorTypeFromCompositeFieldPath ValueSelectorType = "FromCompositeFieldPath"
+	// ValueSelectorTypeFromEnvironmentFieldPath extracts
+	// the value from an environment fieldpath.
+	ValueSelectorTypeFromEnvironmentFieldPath ValueSelectorType = "FromEnvironmentFieldPath"
+
+	// ValueSelectorTypeValue uses a literal value.
+	ValueSelectorTypeValue ValueSelectorType = "Value"
 )
 
 // An EnvironmentSourceSelectorLabelMatcher acts like a k8s label selector but
