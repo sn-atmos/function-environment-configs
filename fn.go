@@ -350,7 +350,7 @@ func getNamespace(config v1beta1.EnvironmentSource, xr *resource.Composite, env 
 
 	switch config.Namespace.GetType() {
 	case v1beta1.ValueSelectorTypeValue:
-		return config.Namespace.Value, nil
+		return &value
 	case v1beta1.ValueSelectorTypeFromEnvironmentFieldPath:
 		result, err := fieldpath.Pave(env).GetString(value)
 		if err != nil {
