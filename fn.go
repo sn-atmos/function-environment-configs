@@ -334,7 +334,7 @@ func lessAs[T cmp.Ordered](a, b any) (bool, error) {
 }
 
 // getNamespace returns the configured namespace of the EnvironmentSource.
-// If namespace value is not set (nil or empty string), it defaults to XR namespace.
+// If namespace value is not set (nil or empty string), it defaults to XR namespace, but returns an error if the XR is cluster-scoped.
 // If the selector type is "Value", it returns the value.
 // If the selector type is "FromEnvironmentFieldPath", it returns the resolved value from the environment field path.
 // If the selector type is "FromCompositeFieldPath", it returns the resolved value from the composite field path.
