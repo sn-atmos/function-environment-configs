@@ -88,6 +88,7 @@ spec:
                         Ignored if cluster-scoped EnvironmentConfig.
                       properties:
                         type:
+                          default: Value
                           description: ValueSelectorType specifies where a value comes
                             from.
                           enum:
@@ -96,6 +97,7 @@ spec:
                           - FromEnvironmentFieldPath
                           type: string
                         value:
+                          description: Value will be resolved based on the type.
                           type: string
                       type: object
                     ref:
