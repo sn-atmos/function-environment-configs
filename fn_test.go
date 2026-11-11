@@ -1551,6 +1551,48 @@ func TestRunFunction(t *testing.T) {
 				},
 			},
 		},
+		"NamespaceTypeIsSetButNoValue": {
+			reason: "The Function should default to XR namespace if namespace type is set but no value",
+			args: args{
+				req: &fnv1.RunFunctionRequest{
+					Observed: &fnv1.State{
+						Composite: &fnv1.Resource{
+							Resource: resource.MustStructJSON(`{
+								"apiVersion": "test.crossplane.io/v1alpha1",
+								"kind": "XR",
+								"metadata": {"name": "my-xr", "namespace": "xr-namespace"}
+							}`),
+						},
+					},
+					Input: resource.MustStructJSON(`{
+						"apiVersion": "environmentconfigs.fn.crossplane.io/v1beta1",
+						"kind": "Input",
+						"spec": {"environmentConfigs": [{
+							"type": "Reference",
+							"apiVersion": "v1",
+							"kind": "ConfigMap",
+							"ref": {"name": "config"},
+							"namespace": {"type": "FromEnvironmentFieldPath"}
+						}]}
+					}`),
+				},
+			},
+			want: want{
+				rsp: &fnv1.RunFunctionResponse{
+					Meta: &fnv1.ResponseMeta{Ttl: durationpb.New(response.DefaultTTL)},
+					Requirements: &fnv1.Requirements{
+						Resources: map[string]*fnv1.ResourceSelector{
+							"environment-config-0": {
+								ApiVersion: "v1",
+								Kind:       "ConfigMap",
+								Namespace:  new("xr-namespace"),
+								Match:      &fnv1.ResourceSelector_MatchName{MatchName: "config"},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for name, tc := range cases {
