@@ -1306,6 +1306,251 @@ func TestRunFunction(t *testing.T) {
 				},
 			},
 		},
+		"NoNamespace": {
+			reason: "The Function should default omitted namespaces to the XR namespace for namespaced environment sources",
+			args: args{
+				req: &fnv1.RunFunctionRequest{
+					Observed: &fnv1.State{
+						Composite: &fnv1.Resource{
+							Resource: resource.MustStructJSON(`{
+								"apiVersion": "test.crossplane.io/v1alpha1",
+								"kind": "XR",
+								"metadata": {"name": "my-xr", "namespace": "xr-namespace"}
+							}`),
+						},
+					},
+					Input: resource.MustStructJSON(`{
+						"apiVersion": "environmentconfigs.fn.crossplane.io/v1beta1",
+						"kind": "Input",
+						"spec": {
+							"environmentConfigs": [
+								{
+									"type": "Reference",
+									"apiVersion": "v1",
+									"kind": "ConfigMap",
+									"ref": {"name": "config"}
+								},
+								{
+									"type": "Selector",
+									"apiVersion": "environmentconfigs.crossplane.io/v1alpha1",
+									"kind": "EnvironmentConfig",
+									"selector": {
+										"matchLabels": [{"type": "Value", "key": "app", "value": "demo"}]
+									}
+								}
+							]
+						}
+					}`),
+				},
+			},
+			want: want{
+				rsp: &fnv1.RunFunctionResponse{
+					Meta: &fnv1.ResponseMeta{Ttl: durationpb.New(response.DefaultTTL)},
+					Requirements: &fnv1.Requirements{
+						Resources: map[string]*fnv1.ResourceSelector{
+							"environment-config-0": {
+								ApiVersion: "v1",
+								Kind:       "ConfigMap",
+								Namespace:  new("xr-namespace"),
+								Match:      &fnv1.ResourceSelector_MatchName{MatchName: "config"},
+							},
+							"environment-config-1": {
+								ApiVersion: "environmentconfigs.crossplane.io/v1alpha1",
+								Kind:       "EnvironmentConfig",
+								Namespace:  new("xr-namespace"),
+								Match: &fnv1.ResourceSelector_MatchLabels{
+									MatchLabels: &fnv1.MatchLabels{Labels: map[string]string{"app": "demo"}},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		"ClusterScopedXRNoNamespace": {
+			reason: "The Function should return a fatal response if the XR is cluster-scoped (no namespace), and namespace is not set in the Environment Source",
+			args: args{
+				req: &fnv1.RunFunctionRequest{
+					Observed: &fnv1.State{
+						Composite: &fnv1.Resource{
+							Resource: resource.MustStructJSON(`{
+								"apiVersion": "test.crossplane.io/v1alpha1",
+								"kind": "XR",
+								"metadata": {"name": "my-xr"}
+							}`),
+						},
+					},
+					Input: resource.MustStructJSON(`{
+						"apiVersion": "environmentconfigs.fn.crossplane.io/v1beta1",
+						"kind": "Input",
+						"spec": {"environmentConfigs": [{
+							"type": "Selector",
+							"apiVersion": "v1",
+							"kind": "ConfigMap",
+							"selector": {
+								"matchLabels": [{"type": "Value", "key": "app", "value": "demo"}]
+							}
+						}]}
+					}`),
+				},
+			},
+			want: want{
+				rsp: &fnv1.RunFunctionResponse{
+					Meta: &fnv1.ResponseMeta{Ttl: durationpb.New(response.DefaultTTL)},
+					Results: []*fnv1.Result{{
+						Severity: fnv1.Severity_SEVERITY_FATAL,
+						Target:   new(fnv1.Target_TARGET_COMPOSITE),
+					}},
+				},
+			},
+		},
+		"MissingCompositeFieldPath": {
+			reason: "The Function should return fatal when a composite field path is invalid",
+			args: args{
+				req: &fnv1.RunFunctionRequest{
+					Observed: &fnv1.State{
+						Composite: &fnv1.Resource{
+							Resource: resource.MustStructJSON(`{
+								"apiVersion": "test.crossplane.io/v1alpha1",
+								"kind": "XR",
+								"metadata": {"name": "my-xr", "namespace": "xr-namespace"}
+							}`),
+						},
+					},
+					Input: resource.MustStructJSON(`{
+						"apiVersion": "environmentconfigs.fn.crossplane.io/v1beta1",
+						"kind": "Input",
+						"spec": {"environmentConfigs": [{
+							"type": "Reference",
+							"apiVersion": "v1",
+							"kind": "ConfigMap",
+							"ref": {"name": "config"},
+							"namespace": {"type": "FromCompositeFieldPath", "value": "spec.missing"}
+						}]}
+					}`),
+				},
+			},
+			want: want{
+				rsp: &fnv1.RunFunctionResponse{
+					Meta: &fnv1.ResponseMeta{Ttl: durationpb.New(response.DefaultTTL)},
+					Results: []*fnv1.Result{{
+						Severity: fnv1.Severity_SEVERITY_FATAL,
+						Target:   new(fnv1.Target_TARGET_COMPOSITE),
+					}},
+				},
+			},
+		},
+		"NonStringCompositeFieldPath": {
+			reason: "The Function should return fatal when a composite field path is not a string",
+			args: args{
+				req: &fnv1.RunFunctionRequest{
+					Observed: &fnv1.State{
+						Composite: &fnv1.Resource{
+							Resource: resource.MustStructJSON(`{
+								"apiVersion": "test.crossplane.io/v1alpha1",
+								"kind": "XR",
+								"metadata": {"name": "my-xr", "namespace": "xr-namespace"},
+								"spec": {"number": 42}
+							}`),
+						},
+					},
+					Input: resource.MustStructJSON(`{
+						"apiVersion": "environmentconfigs.fn.crossplane.io/v1beta1",
+						"kind": "Input",
+						"spec": {"environmentConfigs": [{
+							"type": "Reference",
+							"apiVersion": "v1",
+							"kind": "ConfigMap",
+							"ref": {"name": "config"},
+							"namespace": {"type": "FromCompositeFieldPath", "value": "spec.number"}
+						}]}
+					}`),
+				},
+			},
+			want: want{
+				rsp: &fnv1.RunFunctionResponse{
+					Meta: &fnv1.ResponseMeta{Ttl: durationpb.New(response.DefaultTTL)},
+					Results: []*fnv1.Result{{
+						Severity: fnv1.Severity_SEVERITY_FATAL,
+						Target:   new(fnv1.Target_TARGET_COMPOSITE),
+					}},
+				},
+			},
+		},
+		"MissingEnvironmentFieldPath": {
+			reason: "The Function should return fatal if the environment field path is missing.",
+			args: args{
+				req: &fnv1.RunFunctionRequest{
+					Observed: &fnv1.State{
+						Composite: &fnv1.Resource{
+							Resource: resource.MustStructJSON(`{
+								"apiVersion": "test.crossplane.io/v1alpha1",
+								"kind": "XR",
+								"metadata": {"name": "my-xr", "namespace": "xr-namespace"}
+							}`),
+						},
+					},
+					Input: resource.MustStructJSON(`{
+						"apiVersion": "environmentconfigs.fn.crossplane.io/v1beta1",
+						"kind": "Input",
+						"spec": {"environmentConfigs": [{
+							"type": "Selector",
+							"apiVersion": "v1",
+							"kind": "ConfigMap",
+							"selector": {
+								"matchLabels": [{"type": "Value", "key": "app", "value": "demo"}]
+							},
+							"namespace": {"type": "FromEnvironmentFieldPath", "value": "missing"}
+						}]}
+					}`),
+				},
+			},
+			want: want{
+				rsp: &fnv1.RunFunctionResponse{
+					Meta: &fnv1.ResponseMeta{Ttl: durationpb.New(response.DefaultTTL)},
+					Results: []*fnv1.Result{{
+						Severity: fnv1.Severity_SEVERITY_FATAL,
+						Target:   new(fnv1.Target_TARGET_COMPOSITE),
+					}},
+				},
+			},
+		},
+		"NoEnvironmentForEnvironmentFieldPath": {
+			reason: "The Function should return fatal when a reference namespace requires an absent environment",
+			args: args{
+				req: &fnv1.RunFunctionRequest{
+					Observed: &fnv1.State{
+						Composite: &fnv1.Resource{
+							Resource: resource.MustStructJSON(`{
+								"apiVersion": "test.crossplane.io/v1alpha1",
+								"kind": "XR",
+								"metadata": {"name": "my-xr", "namespace": "xr-namespace"}
+							}`),
+						},
+					},
+					Input: resource.MustStructJSON(`{
+						"apiVersion": "environmentconfigs.fn.crossplane.io/v1beta1",
+						"kind": "Input",
+						"spec": {"environmentConfigs": [{
+							"type": "Reference",
+							"apiVersion": "v1",
+							"kind": "ConfigMap",
+							"ref": {"name": "config"},
+							"namespace": {"type": "FromEnvironmentFieldPath", "value": "some.path"}
+						}]}
+					}`),
+				},
+			},
+			want: want{
+				rsp: &fnv1.RunFunctionResponse{
+					Meta: &fnv1.ResponseMeta{Ttl: durationpb.New(response.DefaultTTL)},
+					Results: []*fnv1.Result{{
+						Severity: fnv1.Severity_SEVERITY_FATAL,
+						Target:   new(fnv1.Target_TARGET_COMPOSITE),
+					}},
+				},
+			},
+		},
 	}
 
 	for name, tc := range cases {
