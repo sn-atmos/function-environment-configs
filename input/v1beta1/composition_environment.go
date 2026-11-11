@@ -286,24 +286,6 @@ func (e *EnvironmentSourceSelectorLabelMatcher) GetType() EnvironmentSourceSelec
 	return e.Type
 }
 
-type ValueSelector struct {
-	// Type specifies where the value comes from.
-	// +optional
-	// +kubebuilder:validation:Enum=FromCompositeFieldPath;FromEnvironmentFieldPath;Value
-	// +kubebuilder:default=Value
-	Type ValueSelectorType `json:"type,omitempty"`
-
-	// Value specifies a literal label value.
-	Value *string `json:"value,omitempty"`
-}
-
-func (v *ValueSelector) GetType() ValueSelectorType {
-	if v == nil || v.Type == "" {
-		return ValueSelectorTypeFromCompositeFieldPath
-	}
-	return v.Type
-}
-
 // A FromFieldPathPolicy determines how to patch from a field path.
 type FromFieldPathPolicy string
 
