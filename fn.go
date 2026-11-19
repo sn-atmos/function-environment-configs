@@ -351,6 +351,12 @@ func lessAs[T cmp.Ordered](a, b any) (bool, error) {
 func getNamespace(config v1beta1.EnvironmentSource, xr *resource.Composite, env map[string]any) (*string, error) {
 	if config.Namespace == nil || config.Namespace.Value == nil {
 		if xr.Resource.GetNamespace() == "" {
+			// Might be crossplane v1 cluster scoped XR - check for claim's namespace label.
+			labels := xr.Resource.GetLabels()
+			if namespace, ok := labels["crossplane.io/claim-namespace"]; ok {
+				return new(namespace), nil
+			}
+
 			return nil, errors.New("namespace.value must be set for cluster-scoped XR's")
 		}
 		return new(xr.Resource.GetNamespace()), nil
